@@ -78,11 +78,11 @@ def train(epochs):
         enc.load_state_dict(torch.load(os.path.join(pretrained_model_path, 'enc_{}_{}.pth'.format(assigned_epoch, assigned_step ))))
         dec.load_state_dict(torch.load(os.path.join(pretrained_model_path, 'dec_{}_{}.pth'.format(assigned_epoch, assigned_step ))))
         r.load_state_dict(torch.load(os.path.join(pretrained_model_path, 'r_{}_{}.pth'.format(assigned_epoch, assigned_step ))))
-        #head.load_state_dict(torch.load(os.path.join(pretrained_model_path, 'head_{}_{}.pth'.format(assigned_epoch, assigned_step ))))
+        head.load_state_dict(torch.load(os.path.join(pretrained_model_path, 'head_{}_{}.pth'.format(assigned_epoch, assigned_step ))))
         enc.eval()
         dec.eval()
         r.eval()
-        #head.eval()
+        head.eval()
 
     model = [enc, dec, r]
 

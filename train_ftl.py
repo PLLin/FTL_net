@@ -31,7 +31,7 @@ pretrained_model_path = 'ckpt'
 assigned_epoch, assigned_step = 0, 39000
 
 epoch_num = 100
-batch_size = 128
+batch_size = 64
 device = torch.device("cuda:1")
 #device = torch.device("cpu")
 board_loss_every = 100
@@ -85,10 +85,15 @@ def UpdateStats(enc, data_folder, all_class, regular_class):
     Q = torch.zeros((320, 320)).to(device)
     h = []
     ur_class_file = []
+    sample_regular_class_idx = random.sample(range(len(regular_class)), 5000)
+    sample_regular_class = [regular_class[i] for i in sample_regular_class_idx]
     with torch.no_grad():
         for idx, cand in enumerate(all_class):
-            #if idx > 10:
-            #    break
+            if idx % 5000 == 0:
+              logging.debug("UpdateStats Processing...{}".format(idx))
+            if cand in regular_class:
+               if not cand in sample_regular_class:
+                  continue
             cand_folder_path = os.path.join(data_folder, cand)
             c = torch.zeros((1, 320)).to(device)
             g_list = dict()
@@ -103,8 +108,6 @@ def UpdateStats(enc, data_folder, all_class, regular_class):
                 g_sum = torch.sum(g_out, 0)
                 g_list[img_name] = g_out[0]
                 c = c + g_sum
-            if idx % 5000 == 0:
-                logging.debug("UpdateStats Processing...{}".format(idx))
             center[cand] = torch.div(c, 2*(ind+1))
             if cand in regular_class:
                 c = center[cand]
@@ -173,12 +176,13 @@ def train(epochs):
        for stage in [1, 2]:
             ## Initial Train For Stage 1 and 2            
             if stage == 1:
+                center, Q, h, ur_class_file = None, None, None, None
                 center, Q, h, ur_class_file = UpdateStats(model[0], data_folder, all_class, regular_class)
                 logging.debug("Center_num:{}, h_num:{}, ur_class_num:{}".format(len(center), len(h), len(ur_class_file)))
             else:
                 iterr = iter(loader)
             ## Start Training            
-            for step_stage in range(5000):
+            for step_stage in range(20000):
                 if stage == 1:
                     regular_batch = random.sample(range(len(h)), batch_size)
                     ur_batch = random.sample(range(len(ur_class_file)), batch_size)
@@ -258,7 +262,7 @@ def train(epochs):
                         torch.save(model[2].state_dict(), '{}/r_alter_{}_{}.pth'.format(save_path, e, step))
                         torch.save(head.state_dict(), '{}/head_alter_{}_{}.pth'.format(save_path, e, step))
                         acc_max = accuracy
-                    logging.debug("Save ckpt at epoch:{} step:{}".format(e, step))
+                        logging.debug("Save ckpt at epoch:{} step:{}".format(e, step))
 
                 step += 1
 
